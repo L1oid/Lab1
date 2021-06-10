@@ -1,482 +1,314 @@
 #include <iostream>
 #include <fstream>
-#include <iomanip>
-#include <string>
+#include <ctime>
 using namespace std;
 
-struct BookInfo
-{
-    string book;
-    int price;
-    int pages;
-    double rating;
-    void Out();
-};
-
-struct DLList
-{
-    struct Node
-    {
-        BookInfo data;     //information
-        Node* next;   //next node position
-        Node* prev;   //previous node position
-    };
-
-    Node* F = NULL;     //first node
-    Node* L = NULL;     //last node
-    Node* C = NULL;     //current node
-    int Count;        //node count
-
-    void Out();
-    void Info();
-    void Clear();
-
-    bool MoveNext();
-    bool MovePrev();
-    bool MoveFirst();
-    bool MoveLast();
-
-    bool Init(BookInfo);
-    bool AddNext(BookInfo);
-    bool AddPrev(BookInfo);
-    bool AddFirst(BookInfo);
-    bool AddLast(BookInfo);
-
-    bool Del(BookInfo&);
-    bool DelNext(BookInfo&);
-    bool DelPrev(BookInfo&);
-    bool DelFirst(BookInfo&);
-    bool DelLast(BookInfo&);
-};
-
-bool DLList::MoveNext()
-{
-    if (!F)       return false;
-    if (!C) { C = F; return true; }
-    if (!C->next) return false;
-    C = C->next;
-    return true;
-}
-
-bool DLList::MovePrev()
-{
-    if (!F)       return false;
-    if (!C) { C = F; return true; }
-    if (!C->prev) return false;
-    C = C->prev;
-    return true;
-}
-bool DLList::MoveFirst()
-{
-    if (!F) return false;
-    C = F;
-    return true;
-}
-
-bool DLList::MoveLast()
-{
-    if (!L) return false;
-    C = L;
-    return true;
-}
-
-bool DLList::Init(BookInfo data)
-{
-    if (!F)
-    {
-        F = new Node;
-        L = F;
-        C = F;
-        F->prev = NULL;
-        F->next = NULL;
-        F->data = data;
-        Count = 1;
-        return true;
-    }
-    else
-        return false;
-}
-
-bool DLList::AddNext(BookInfo data)
-{
-    if (!F) return Init(data);
-
-    Node* temp = C->next;
-    C->next = new Node;
-    C->next->next = temp;
-    C->next->prev = C;
-
-    if (!temp)
-        L = C->next;
-    else
-        temp->prev = C->next;
-
-    C = C->next;
-    C->data = data;
-    Count++;
-    return true;
-
-}
-
-bool DLList::AddPrev(BookInfo data)
-{
-    if (!F) return Init(data);
-
-    Node* temp = C->prev;
-    C->prev = new Node;
-    C->prev->next = C;
-    C->prev->prev = temp;
-
-    if (!temp)
-        F = C->prev;
-    else
-        temp->next = C->prev;
-
-    C = C->prev;
-    C->data = data;
-    Count++;
-    return true;
-}
-
-bool DLList::AddFirst(BookInfo data)
-{
-    if (MoveFirst())return AddPrev(data);
-    else return false;
-}
-
-bool DLList::AddLast(BookInfo data)
-{
-    if (MoveLast())return AddNext(data);
-    else return false;
-}
-
-void DLList::Out()
-{
-    if (!F)
-    {
-        cout << "List is empty" << endl;
-        return;
-    }
-
-    Node* temp = F;
-    cout << "List: " << endl << endl;
-    do
-    {
-        temp->data.Out();
-        temp = temp->next;
-    } while (temp);
-    cout << endl;
-}
-
-void DLList::Info()
-{
-
-    if (Count)
-        cout << "List node count: "
-        << Count << endl << endl;
-    else
-        cout << "List is empty" << endl;
-    if (C)
-    {
-        if (MoveFirst())
-        {
-            cout << "Current node data: ";
-            C->data.Out();
-        }
-    }
-}
-
-bool DLList::DelFirst(BookInfo& data)
-{
-    if (!F)      return false;
-    if (C != F)    MoveFirst();
-
-    Node* temp = C->next;
-    data = C->data;
-
-    if (temp) temp->prev = NULL;
-    delete C;
-
-    C = temp;
-    F = temp;
-    Count--;
-    if (!temp) { L = NULL; return false; }
-    return true;
-}
-
-bool DLList::DelLast(BookInfo& data)
-{
-    if (!F)      return false;
-    if (C != L)    MoveLast();
-
-    Node* temp = C->prev;
-    data = C->data;
-
-    if (temp) temp->next = NULL;
-    delete C;
-
-    C = temp;
-    L = temp;
-    Count--;
-
-    if (!temp) { F = NULL; return false; }
-    return true;
-}
-
-bool DLList::Del(BookInfo& data)
-{
-    if (!F) return false;
-    if (!C) return false;
-
-    if (C == F) return DelFirst(data);
-    if (C == L) return DelLast(data);
-
-    Node* temp = C->next;
-    data = C->data;
-
-    C->prev->next = C->next;
-    C->next->prev = C->prev;
-
-    delete C;
-    C = temp;
-    Count--;
-    return true;
-}
-
-bool DLList::DelNext(BookInfo& data)
-{
-    if (!F) return false;
-    if (!C) return false;
-    if (MoveNext()) return Del(data);
-    return false;
-}
-bool DLList::DelPrev(BookInfo& data)
-{
-    if (!F) return false;
-    if (!C) return false;
-    if (MovePrev()) return Del(data);
-    return false;
-}
-
-void DLList::Clear()
-{
-    if (!MoveFirst())
-    {
-        cout << "List is empty" << endl;
-        return;
-    }
-    BookInfo k;
-    while (Del(k));
-}
-
-void BookInfo::Out()
-{
-    cout << "Book: " << book << "\t\t" << "Price: " << price << "\t" << "Pages: " << pages << "\t" << "Rating: " << rating << endl << endl;
-}
-
-bool GetFile(DLList&, BookInfo&);
-bool WriteFile(DLList&, BookInfo&);
-void GetBook(BookInfo&);
+float* MemoryArray(int count);
+int DimensionFile();
+void OutputArray(int dimension, float* arr);
+void AddElements(float*& arr, int& dimension, int index, float number);
+void AddElementsAfter(float*& arr, int& dimension, float check_num, float number);
+void DeleteElements(float*& arr, int& dimension, int index);
+void DeleteGivenElements(float*& arr, int& dimension, float number);
 
 int main()
 {
-    BookInfo Info;
-    DLList DLList;
-    GetFile(DLList, Info);
-    DLList.Out();
-    int num, key = 0, key1 = 0, key2 = 0;
-    do
-    {
-        cout << "1) Add element" << endl
-            << "2) Del element" << endl
-            << "3) Clear list" << endl
-            << "4) Upload data" << endl
-            << "0) Exit" << endl;
-        cout << endl << "Select an action: ";
-        cin >> key;
-        cout << endl;
-        switch (key)
-        {
-        case 1:
-            cout << "1) Add to start" << endl
-                << "2) Add to end" << endl
-                << "3) Add to k position" << endl
-                << "0) Back" << endl;
-            cout << endl << "Select an action: ";
-            cin >> key1;
-            cout << endl;
-            switch (key1)
-            {
-            case 1:
-                GetBook(Info);
-                DLList.AddFirst(Info);
-                DLList.Out();
-                break;
-            case 2:
-                GetBook(Info);
-                DLList.AddLast(Info);
-                DLList.Out();
-                break;
-            case 3:
-                do
-                {
-                    cout << "Enter position: ";
-                    cin >> num;
-                    if ((num > (DLList.Count + 1)) || (num <= 0))
-                    {
-                        cout << "Error ! Try again." << endl;
-                    }
-                } while ((num > (DLList.Count + 1)) || (num <= 0));
-                GetBook(Info);
-                if (num == 1)
-                {
-                    DLList.AddFirst(Info);
-                    DLList.Out();
-                    break;
-                }
-                else if (num == DLList.Count + 1)
-                {
-                    DLList.AddLast(Info);
-                    DLList.Out();
-                    break;
-                }
-                DLList.MoveFirst();
-                for (int i = 1; i < num - 1; i++)
-                {
-                    DLList.MoveNext();
-                }
-                DLList.AddNext(Info);
-                DLList.Out();
-                break;
-            default:
-                if (key1 != 0)
-                {
-                    cout << "There is no such action !" << endl << endl;
-                }
-                break;
-            }
-            break;
-        case 2:
-            cout << "1) Delete first" << endl
-                << "2) Delete last" << endl
-                << "3) Delete k position" << endl
-                << "0) Back" << endl;
-            cout << endl << "Select an action: ";
-            cin >> key2;
-            cout << endl;
-            switch (key2)
-            {
-            case 1:
-                DLList.DelFirst(Info);
-                DLList.Out();
-                break;
-            case 2:
-                DLList.DelLast(Info);
-                DLList.Out();
-                break;
-            case 3:
-                do
-                {
-                    cout << "Enter position: ";
-                    cin >> num;
-                    if ((num > DLList.Count) || (num <= 0))
-                    {
-                        cout << "Error ! Try again." << endl;
-                    }
-                } while ((num > DLList.Count) || (num <= 0));
-                if (num == 1)
-                {
-                    DLList.DelFirst(Info);
-                    DLList.Out();
-                    break;
-                }
-                else if (num == DLList.Count)
-                {
-                    DLList.DelLast(Info);
-                    DLList.Out();
-                    break;
-                }
-                DLList.MoveFirst();
-                for (int i = 1; i < num; i++)
-                {
-                    DLList.MoveNext();
-                }
-                DLList.Del(Info);
-                DLList.Out();
-                break;
-            default:
-                if (key2 != 0)
-                {
-                    cout << "There is no such action !" << endl << endl;
-                }
-                break;
-            }
-            break;
-        case 3:
-            DLList.Clear();
-            DLList.Out();
-            break;
-        case 4:
-            WriteFile(DLList, Info);
-            break;
-        default:
-            if (key != 0)
-            {
-                cout << "There is no such action !" << endl << endl;
-            }
-            DLList.Clear();
-            DLList.Out();
-            break;
-        }
-    } while (key != 0);
+	setlocale(LC_ALL, "Rus");
+	srand(time(0));
+	int keylocale = 0, key = 0, dimension, index;
+	float number, check_num;
+	dimension = DimensionFile();
+	float* arr = MemoryArray(dimension);
+	cout << "Колличество элементов в массиве: " << dimension << endl;
+	cout << "Стартовый массив: ";
+	OutputArray(dimension, arr);
+	do
+	{
+		cout << "1) добавить элемент в конец массива" << endl
+			<< "2) добавить элемент в начало массива" << endl
+			<< "3) добавить элемент на k-ую позицию в массиве" << endl
+			<< "4) удалить последний элемент массива" << endl
+			<< "5) удалить первый элемент массива" << endl
+			<< "6) удалить k-ый элемент массива" << endl
+			<< "7) добавить элемент массива после первого встреченного элемента с заданным значением" << endl
+			<< "8) удалить все элементы массива с заданным значением, если такого значения нет" << endl
+			<< "0) выход" << endl;
+		cout << endl << "Выберите действие: ";
+		cin >> key;
+		cout << endl;
+		switch (key)
+		{
+		case 1:
+			cout << "Задайте число, которое будет добавляться: "; 
+			cin >> number;
+			cout << endl;
+			AddElements(arr, dimension, dimension, number);
+			break;
+		case 2:
+			cout << "Задайте число, которое будет добавляться: ";
+			cin >> number;
+			cout << endl;
+			AddElements(arr, dimension, 0, number);
+			break;
+		case 3:
+			cout << "1) Рандомный" << endl
+				<< "2) Свой" << endl << endl
+				<< "Выберите действие: ";
+			cin >> keylocale;
+			cout << endl;
+			switch (keylocale)
+			{
+			case 1:
+				cout << "Задайте число, которое будет добавляться: ";
+				cin >> number;
+				index = (rand() % (dimension - (0 + 1) + 0));
+				cout << "Рандомный индекс: " << index;
+				cout << endl << endl;
+				AddElements(arr, dimension, index, number);
+				break;
+			case 2:
+				cout << "Задайте число, которое будет добавляться: ";
+				cin >> number;
+				cout << "Задайте индекс изменяемого элемента: ";
+				cin >> index;
+				cout << endl;
+				AddElements(arr, dimension, index, number);
+				break;
+			default:
+				if (keylocale != 0)
+				{
+					cout << "Такого действия нет !" << endl << endl;
+				}
+				break;
+			}
+			break;
+		case 4:
+			DeleteElements(arr, dimension, dimension - 1);
+			break;
+		case 5:
+			DeleteElements(arr, dimension, 0);
+			break;
+		case 6:
+			cout << "Задайте индекс удаляемого элемента: ";
+			cin >> index;
+			cout << endl;
+			DeleteElements(arr, dimension, index);
+			break;
+		case 7:
+			cout << "Задайте число, которое будет добавляться: ";
+			cin >> number;
+			cout << "Задайте число после которого будет добавлено другое число: ";
+			cin >> check_num;
+			cout << endl;
+			AddElementsAfter(arr, dimension, check_num, number);
+			break;
+		case 8:
+			cout << "Задайте число, которое нужно удалить: ";
+			cin >> number;
+			cout << endl;
+			DeleteGivenElements(arr, dimension, number);
+			break;
+		default:
+			if (key != 0)
+			{
+				cout << "Такого действия нет !" << endl << endl;
+			}
+			break;
+		}
+	} while (key != 0);
+	delete[] arr;
+	arr = nullptr;
+	return 0;
 }
 
-bool GetFile(DLList& DLList, BookInfo& Info)
+float* MemoryArray(int dimension)
 {
-    ifstream F("Books.txt");
-    if (!F)
-    {
-        cout << "Cant find file" << endl;
-        return false;
-    }
-    while (F >> Info.book >> Info.price >> Info.pages >> Info.rating)
-    {
-        DLList.AddNext(Info);
-    }
-    F.close();
-    return true;
+	float* arr = new float[dimension];
+	ifstream f("Array.txt");
+	for (int i = 0; i < dimension; i++)
+	{
+		f >> arr[i];
+	}
+	f.close();
+	return arr;
 }
 
-bool WriteFile(DLList& DLList, BookInfo& Info)
+void AddElements(float*& arr, int& dimension, int index, float number)
 {
-    ofstream F("Books.txt");
-    if (!F)
-    {
-        cout << "Cant find file" << endl;
-        return false;
-    }
-    DLList.MoveFirst();
-    do
-    {
-        F << DLList.C->data.book << " " << DLList.C->data.pages << " " << DLList.C->data.price << " " << DLList.C->data.rating << endl;
-    } while (DLList.MoveNext());
-    DLList.MoveFirst();
-    F.close();
-    return true;
+	bool exit = 0;
+	if (index < 0 || index > dimension + 1)
+	{
+		exit = 0;
+	}
+	else
+	{
+		float* buff = new float[dimension + 1];
+		for (int i = 0; i < index; i++)
+		{
+			buff[i] = arr[i];
+		}
+		buff[index] = number;
+		for (int i = index + 1; i < dimension + 1; i++)
+		{
+			buff[i] = arr[i - 1];
+		}
+		exit = 1;
+		delete[] arr;
+		arr = buff;
+		dimension += 1;
+	}
+	if (exit == 0)
+	{
+		cout << "Ошибка ! Вы вышли за пределы массива !" << endl << endl;
+	}
+	else
+	{
+		OutputArray(dimension, arr);
+		cout << "Действие выполнено !" << endl << endl;
+	}
 }
 
-void GetBook(BookInfo& Info)
+void DeleteElements(float*& arr, int& dimension, int index)
 {
-    cout << "Enter the title: ";
-    cin >> Info.book;
-    cout << endl;
-    cout << "Enter the price: ";
-    cin >> Info.price;
-    cout << endl;
-    cout << "Enter the amount pages: ";
-    cin >> Info.pages;
-    cout << endl;
-    cout << "Enter the rating: ";
-    cin >> Info.rating;
-    cout << endl;
+	bool exit = 0;
+	if (index < 0 || index >= dimension)
+	{
+		exit = 0;
+	}
+	else
+	{
+		float* buff = new float[dimension - 1];
+		for (int i = 0; i < index; i++)
+		{
+			buff[i] = arr[i];
+		}
+		for (int i = index; i < dimension; i++)
+		{
+			buff[i] = arr[i + 1];
+		}
+		exit = 1;
+		delete[] arr;
+		arr = buff;
+		dimension -= 1;
+	}
+	if (exit == 0)
+	{
+		cout << "Ошибка ! Вы вышли за пределы массива !" << endl << endl;
+	}
+	else
+	{
+		OutputArray(dimension, arr);
+		cout << "Действие выполнено !" << endl << endl;
+	}
+}
+
+void AddElementsAfter(float*& arr, int& dimension, float check_num, float number)
+{
+	bool exit = 0;
+	for (int i = 0; i < dimension; i++)
+	{
+		if (arr[i] == check_num)
+		{
+			int index = 0;
+			float* buff = new float[dimension + 1];
+			for (int i = 0, j = 0; i < dimension; i++, j++)
+			{
+				buff[j] = arr[i];
+				if (arr[i] == check_num)
+				{
+					buff[j + 1] = number;
+					break;
+				}
+				index++;
+			}
+			for (; index < dimension; index++)
+			{
+				buff[index + 2] = arr[index + 1];
+			}
+			exit = 1;
+			delete[] arr;
+			arr = buff;
+			dimension += 1;
+			break;
+		}
+	}
+	if (exit == 0)
+	{
+		cout << "Такой цифры в массиве нет !" << endl << endl;
+	}
+	else
+	{
+		OutputArray(dimension, arr);
+		cout << "Действие выполнено !" << endl << endl;
+	}
+}
+
+void DeleteGivenElements(float*& arr, int& dimension, float number)
+{
+	int count = 0;
+	bool exit = 0;
+	for (int i = 0; i < dimension; i++)
+	{
+		if (arr[i] == number)
+		{
+			int index = 0;
+			float* buff = new float[dimension];
+			for (int i = 0, j = 0; i < dimension; i++, j++)
+			{
+				buff[j] = arr[i];
+				if (arr[i] == number)
+				{
+					while (arr[i] == arr[i + 1])
+					{
+						i++;
+						count++;
+					}
+					buff[j] = arr[i + 1];
+					count++;
+					i++;
+				}
+			}
+			dimension -= count;
+			exit = 1;
+			delete[] arr;
+			arr = buff;
+			break;
+		}
+	}
+	if (exit == 0)
+	{
+		cout << "Такой цифры в массиве нет !" << endl << endl;
+	}
+	else
+	{
+		OutputArray(dimension, arr);
+		cout << "Действие выполнено !" << endl << endl;
+	}
+}
+
+int DimensionFile()
+{
+	ifstream f("Array.txt");
+	float check;
+	int count = 0;
+	while (f >> check)
+	{
+		count++;
+	}
+	f.close();
+	if (count == 0)
+	{
+		cout << "Внимание, файл пуст или отсутсвует ! Замените файл и перезапустите программу." << endl;
+		exit(0);
+	}
+	else return count;
+}
+
+void OutputArray(int dimension, float* arr)
+{
+	for (int i = 0; i < dimension; i++)
+	{
+		cout << arr[i] << " ";
+	}
+	cout << endl << endl;
 }
